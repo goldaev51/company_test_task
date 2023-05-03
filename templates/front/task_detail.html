@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1>{{ object.title }}</h1>
+        <p>Описание: {{ object.description }}</p>
+        <p>Дата создания: {{ object.creation_time }}</p>
+        <p>Статус: <span id="task-status">{{ task.status|yesno:"Выполнена,Не выполнена" }}</span></p>
+        {% if task.status %}
+            <button id="toggle-status" class="btn btn-outline-secondary" data-task-id="{{ task.pk }}">Возобновить
+            </button>
+        {% else %}
+            <button id="toggle-status" class="btn btn-outline-success" data-task-id="{{ task.pk }}">Завершить задачу
+            </button>
+        {% endif %}
+        <form id="csrf-form" style="display:none;">
+            {% csrf_token %}
+        </form>
+        {#        <p>Статус: {% if object.status %}Выполнена{% else %}В процессе{% endif %}</p>#}
+        {##}
+        {#        <form method="post" action="{% url 'front:task_toggle_status' object.pk %}">#}
+        {#            {% csrf_token %}#}
+        {#            {% if object.status %}#}
+        {#                <button type="submit" class="btn btn-outline-secondary">#}
+        {#                    Возобновить#}
+        {#                </button>#}
+        {#            {% else %}#}
+        {#                <button type="submit" class="btn btn-outline-success">#}
+        {#                    Завершить#}
+        {#                </button>#}
+        {#            {% endif %}#}
+        {#        </form>#}
+        {% if user.is_authenticated %}
+            <br>
+            <br>
+            <a href="{% url 'front:task_update' object.pk %}" class="btn btn-primary">Редактировать</a>
+            <a href="{% url 'front:task_delete' object.pk %}" class="btn btn-danger">Удалить</a>
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block extra_js %}
+    <script>
+        const toggleStatusButton = document.getElementById('toggle-status');
+        toggleStatusButton.addEventListener('click', function () {
+            const taskId = this.getAttribute('data-task-id');
+            const csrfToken = document.getElementById('csrf-form').querySelector('[name=csrfmiddlewaretoken]').value;
+
+            fetch(`/task/${taskId}/toggle-status-api/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': csrfToken
+                },
+                body: `csrfmiddlewaretoken=${encodeURIComponent(csrfToken)}`
+            })
+                .then(response => response.json())
+                .then(data => {
+                    const statusText = data.status ? 'Выполнена' : 'Не выполнена';
+                    document.getElementById('task-status').innerText = statusText;
+
+                    if (data.status) {
+                        toggleStatusButton.classList.remove('btn-outline-success');
+                        toggleStatusButton.classList.add('btn-outline-secondary');
+                        toggleStatusButton.innerText = 'Возобновить';
+                    } else {
+                        toggleStatusButton.classList.remove('btn-outline-secondary');
+                        toggleStatusButton.classList.add('btn-outline-success');
+                        toggleStatusButton.innerText = 'Завершить задачу';
+                    }
+                });
+        });
+    </script>
+{% endblock %}
+
