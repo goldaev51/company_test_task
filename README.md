@@ -21,4 +21,5 @@ The goal is to create a Django web application for managing a task list. The app
 * python manage.py migrate
 * ./manage.py create_test_tasks 20
 * ./manage.py runserver
+* open browser with url http://127.0.0.1:8000/
 
